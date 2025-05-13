@@ -2,10 +2,20 @@
 Let:
 
 N be the number of informants.
+    - i represents the individual informant and their answers to all questions M 
+        - Might be represented as a row
 M be the number of items (questions).
+    - j represents the individual questions that all participants have answered
+        - Might be represented as a column 
 Xij be the response of informant i to item j (0 or 1).
+    - ij represents the specific question 
+        - Might be represented as the one answer at the intersection of i and j
 Zj be the latent "consensus" or "correct" answer for item j (0 or 1).
+    - Zj represents the individual "consensus" or "correct" answers 
+        - Represented along the column
 Di be the latent "competence" of informant i (probability of knowing the correct answer), where 0.5 ≤ Di ≤ 1.
+    - Di represents competence among individual participants 
+        - Represented along the row
 
 """
 
@@ -16,18 +26,10 @@ import pandas as pd
 #CHATGPT HELP: Figuring out how to open a csv file and append all values within dataset into a numpy array 
 def open_dataset(): 
     plant_knowledge_pd = pd.read_csv('plant_knowledge.csv')
-    plant_knowledge = plant_knowledge_pd.to_numpy() 
-
-    N = len(plant_knowledge[:, 0])
-    M = len(plant_knowledge[0])
-    
-    for row in plant_knowledge: 
-        num_correct = #Create a dictionary of each participant's correct answers. Count the amount of correct answers each participant got
-        for item in row: 
-            if item == '1': 
+    plant_knowledge_np = plant_knowledge_pd.to_numpy() 
+    plant_knowledge = np.delete(plant_knowledge_np, 0, axis = 0)
                 
-         
-    return plant_knowledge, N, M, Z
+    print(plant_knowledge)
 
 def pymc_model(data): 
 
@@ -45,9 +47,6 @@ def pymc_model(data):
     """For each informant's competence Di, choose a suitable prior distribution. Justify your choice in the report.
         - For Di, I will likely have to use an informative prior between 0.5 and 1"""
 
-    #NOTE: Restructure the first function and try to organize the data for the rest
-    #of this program
-
     #PRIORS 
     # For each informant's competence Di, I will be using an informative prior distribution 
     #   - Informative with the assumption that the informant will have some degree of prior knowledge
@@ -57,17 +56,38 @@ def pymc_model(data):
     #   - Using the Bernoulli distribution and a bernoulli prior assumping minimal prior 
     #       assumption. 
 
+    N = len(data[:, 0])
+    M = len(data[0])
+
     with pm.Model as plant_knowledge_model(): 
 
-        b = pm.beta('b', alpha = 6, beta = 4)
-        D = pm.binomial("D", N=N, Z=Z, observed=N_correct) #Select priors 
+        #CHATGPT: After determining prior and distribution, used AI to help figure out 
+        #   defining the priors given vector of size N and M
+        D_b = pm.Beta('D_b', alpha = 6, beta = 4, shape = N)
+        D = pm.binomial("D", M=M, b=b, observed=data) #Select priors 
 
-        Z = pm.Bernoulli('Z', b, observed=obs)
+        Z = pm.Bernoulli('Z', D_b, shape = M)
 
+        #Defining the proability of p_ij. 
         D_reshaped = D[:, None] 
-        p = Z * D_reshaped + (1 - Z) * (1 - D_reshaped) 
+        p = Z * D_reshaped + (1 - Z) * (1 - D_reshaped) #Is this for all i and j?
 
-        #Connect observed data X to p. 
+        #Define likelihood, linking the observed data X to the calculated proability 
+        # p. 
 
-    # dummy edit
-# dummy edit
+#def data_sample(): 
+
+
+
+
+
+    
+
+"""def run(): 
+    plant_knowledge = open_dataset()
+    py = pymc_model(plant_knowledge)
+"""
+
+if __name__ == '__main__': 
+    plant_data = open_dataset()
+
