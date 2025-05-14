@@ -18,8 +18,6 @@ Di be the latent "competence" of informant i (probability of knowing the correct
         - Represented along the row
 
 """
-
-from setup import *  # Import common functions and libraries
 import numpy as np 
 import pandas as pd
 
@@ -47,6 +45,7 @@ def pymc_model(data):
     """For each informant's competence Di, choose a suitable prior distribution. Justify your choice in the report.
         - For Di, I will likely have to use an informative prior between 0.5 and 1"""
 
+"""
     #PRIORS 
     # For each informant's competence Di, I will be using an informative prior distribution 
     #   - Informative with the assumption that the informant will have some degree of prior knowledge
@@ -59,7 +58,7 @@ def pymc_model(data):
     N = len(data[:, 0])
     M = len(data[0])
 
-    with pm.Model as plant_knowledge_model(): 
+    with pm.Model as model(): 
 
         #CHATGPT: After determining prior and distribution, used AI to help figure out 
         #   defining the priors given vector of size N and M
@@ -77,7 +76,7 @@ def pymc_model(data):
 
 #def data_sample(): 
 
-
+"""
 
 
 
@@ -90,4 +89,3 @@ def pymc_model(data):
 
 if __name__ == '__main__': 
     plant_data = open_dataset()
-
