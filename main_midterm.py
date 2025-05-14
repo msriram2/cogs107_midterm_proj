@@ -40,8 +40,7 @@ def open_dataset():
     plant_knowledge_np = plant_knowledge_pd.to_numpy() 
     plant_knowledge = np.delete(plant_knowledge_np, 0, axis = 1)
                 
-    print(plant_knowledge_np)
-    return(plant_knowledge_np)
+    return plant_knowledge_np
 
 def pymc_model(data): 
 
@@ -88,7 +87,6 @@ def pymc_model(data):
         Z_reshaped = Z[None, :]
         prob = Z_reshaped * D_reshaped + (1 - Z_reshaped) * (1 - D_reshaped)
 
-        print('probability is:', prob) 
         return Z
 
 def plant_data_sample(model):
@@ -106,7 +104,7 @@ def plant_data_sample(model):
         az.plot_trace(plant_posterior_data)
         az.summary(plant_posterior_data)
 
-    print('sample_data is:', plant_posterior_data)
+    return plant_posterior_data
 
 def plant_data_analyis(posterior_data, array):
      
