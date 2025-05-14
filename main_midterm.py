@@ -3,6 +3,7 @@
 import numpy as np 
 import pandas as pd
 import arviz as az
+import pymc as pm
 
 """
 Below is an explanation and interpretation of the variables
@@ -37,10 +38,10 @@ def open_dataset():
     """
     plant_knowledge_pd = pd.read_csv('plant_knowledge.csv')
     plant_knowledge_np = plant_knowledge_pd.to_numpy() 
-    plant_knowledge = np.delete(plant_knowledge_np, 0, axis = 0)
+    plant_knowledge = np.delete(plant_knowledge_np, 0, axis = 1)
                 
-    print(plant_knowledge)
-    return(plant_knowledge)
+    print(plant_knowledge_np)
+    return(plant_knowledge_np)
 
 def pymc_model(data): 
 
@@ -62,14 +63,14 @@ def pymc_model(data):
 
     For each consensus answer Zj, I will use Bernoulli distribution, since informants are still asked to give 
       either 0 or 1 (binary values) as an answer
-      - Using the Bernoulli distribution and a minimal prior assumption of 0.5. 
+
     """
 
     "Determines number of informants (N) and number of questions (M)"
     N = len(data[:, 0])
     M = len(data[0])
 
-    with pm.Model as model(): 
+    with pm.Model() as model: 
 
         #CHATGPT: After determining prior and distribution, used AI to confirm priors and reshape D and Z.
 
@@ -78,16 +79,17 @@ def pymc_model(data):
         """Defining the priors given vector of size N and M"""
         D_raw = pm.Beta('D_raw', alpha = 6, beta = 4, shape = N)
         D = 0.5 + 0.5 * D_raw
-        Z = pm.Bernoulli('Z', P=0.5, shape = M)
+        Z = pm.Bernoulli('Z', p = D, shape = M)
 
         #_______LIKELIHOOD_______
 
         """Defining the proability of p_ij."""
         D_reshaped = D[:, None] 
         Z_reshaped = Z[None, :]
-        p = Z_reshaped * D_reshaped + (1 - Z_reshaped) * (1 - D_reshaped)
+        prob = Z_reshaped * D_reshaped + (1 - Z_reshaped) * (1 - D_reshaped)
 
-        print('probability is:', p) 
+        print('probability is:', prob) 
+        return Z
 
 def plant_data_sample(model):
 
@@ -142,8 +144,8 @@ def plant_data_analyis(posterior_data, array):
 def run_analysis(): 
 
     array = open_dataset()
-    probability = pymc_model(array)
-    posterior = plant_data_sample(model)
+    Model = pymc_model(array)
+    posterior = plant_data_sample(Model)
     plant_data_analysis(posterior, array)
     
 
