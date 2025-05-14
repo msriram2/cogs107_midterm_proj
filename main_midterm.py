@@ -20,6 +20,7 @@ Di be the latent "competence" of informant i (probability of knowing the correct
 """
 import numpy as np 
 import pandas as pd
+import arviz as az
 
 #CHATGPT HELP: Figuring out how to open a csv file and append all values within dataset into a numpy array 
 def open_dataset(): 
@@ -45,7 +46,7 @@ def pymc_model(data):
     """For each informant's competence Di, choose a suitable prior distribution. Justify your choice in the report.
         - For Di, I will likely have to use an informative prior between 0.5 and 1"""
 
-"""
+
     #PRIORS 
     # For each informant's competence Di, I will be using an informative prior distribution 
     #   - Informative with the assumption that the informant will have some degree of prior knowledge
@@ -60,33 +61,78 @@ def pymc_model(data):
 
     with pm.Model as model(): 
 
+        #_____PRIORS_________
+
         #CHATGPT: After determining prior and distribution, used AI to help figure out 
         #   defining the priors given vector of size N and M
-        D_b = pm.Beta('D_b', alpha = 6, beta = 4, shape = N)
-        D = pm.binomial("D", M=M, b=b, observed=data) #Select priors 
+        D_raw = pm.Beta('D_raw', alpha = 6, beta = 4, shape = N)
+        D = 0.5 + 0.5 * D_raw
+        Z = pm.Bernoulli('Z', P=0.5, shape = M)
 
-        Z = pm.Bernoulli('Z', D_b, shape = M)
-
+        #_______LIKELIHOOD_______
         #Defining the proability of p_ij. 
         D_reshaped = D[:, None] 
-        p = Z * D_reshaped + (1 - Z) * (1 - D_reshaped) #Is this for all i and j?
+        Z_reshaped = Z[None, :]
+        p = Z_reshaped * D_reshaped + (1 - Z_reshaped) * (1 - D_reshaped)
 
-        #Define likelihood, linking the observed data X to the calculated proability 
-        # p. 
+        print('probability is:', p) 
 
-#def data_sample(): 
+def plant_data_sample(model, draws, tune, chains, target_accept):
 
-"""
+    """Sample from the posterior distribution
+    
+    Parameters:
+    -----------
+    model : pm.Model
+        The PyMC model to sample from
+    draws : int
+        Number of samples per chain after tuning
+    tune : int
+        Number of steps to discard for tuning the sampler
+    chains : int
+        Number of independent chains to run
+    target_accept : float
+        Parameter for NUTS algorithm, higher values can help with difficult posteriors
+        
+    Returns:
+    --------
+    az.InferenceData
+        Posterior samples
+    """
+    #CHATGPT: Cross checking between AI for validation and 'conditional.py' format for understanding
+    with model: 
+        plant_posterior_data = pm.sample(draws=1000, tune=1000, chains=4, target_accept=0.8)
+        az.plot_trace(plant_posterior_data)
+        az.summary(plant_posterior_data)
+
+    print('sample_data is:', plant_posterior_data)
+
+def analyis(posterior_data):
+     
+    #Convergence Diagnostics:
+
+    #CHATGPT: Cross checking and valiation between AI and 'conditional.py'
+    plant_data_summary = az.summary(posterior_data, var_names=['p', 'D', 'Z'], hdi_prob = 0.94)
+    print(plant_data_summary)
+
+    #Posterior Mean Competence D_i: The mean of the posterior distribution for each D_i
+
+    #CHATGPT: Copied code from AI
+    posterior_means_D = plant_data_summary['mean'].values 
+    for i, d in enumerate(posterior_means_D): 
+        print(f"Informant {i+1}: Posterior mean competence D_{i+1} = {d:.3f}")
+    
+    plant_data_average_plotted = az.plot_posterior(plant_data_summary, var_names=['D'])
+    print(plant_data_average_plotted)
 
 
+
+def run_analysis(): 
 
     
 
-"""def run(): 
-    plant_knowledge = open_dataset()
-    py = pymc_model(plant_knowledge)
-"""
+
 
 if __name__ == '__main__': 
-    plant_data = open_dataset()# dummy change
-# temp change to force Git detection
+    run_analysis()
+    
